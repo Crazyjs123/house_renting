@@ -1,0 +1,29 @@
+{
+  "activeAddress": "0xc571b07c805118eb0177af2e4e69913af6e9de1bf3fb3fc4df52a8b9d31343cb",
+  "addresses": [
+    [
+      "mystifying-sphene",
+      "0x3a83fa2eee71c41acd460fc52eec63af12eac3177b18759de2932df9e98b81de"
+    ],
+    [
+      "yijiajia",
+      "0x480431c606b764ae0a60d144676c19ba844be0c74c8732b810720222cca3d089"
+    ],
+    [
+      "tenant",
+      "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+    ],
+    [
+      "kind-dichroite",
+      "0x5d708d27a4bb6c76b1d5d4d1a325bdf6ac152b814d7d5b23f8d7eb35e82dfa6e"
+    ],
+    [
+      "landlord",
+      "0xb11b73b6024875e4c2b497e1c571c1932a43d383dbebd6a80bdf058343cb7563"
+    ],
+    [
+      "admin",
+      "0xc571b07c805118eb0177af2e4e69913af6e9de1bf3fb3fc4df52a8b9d31343cb"
+    ]
+  ]
+}

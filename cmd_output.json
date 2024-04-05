@@ -1,0 +1,158 @@
+{
+  "digest": "6fYyNH9fToajkvvuoJx2PCNGoNfsR9TnS7ho19Apmjnm",
+  "transaction": {
+    "data": {
+      "messageVersion": "v1",
+      "transaction": {
+        "kind": "ProgrammableTransaction",
+        "inputs": [
+          {
+            "type": "object",
+            "objectType": "immOrOwnedObject",
+            "objectId": "0x5c4c5f0f2997ebf2cd016f7cb07679c925a8b0468f6525de2ff9610fa658ff43",
+            "version": "66",
+            "digest": "3X2CoBJpUYAA44jsJzSEjUP39Bjh9iAVq1KVnNGmdKwU"
+          },
+          {
+            "type": "object",
+            "objectType": "immOrOwnedObject",
+            "objectId": "0xa6900388e0234dc38f3e6ed8eaecfe146b88c0f47abac825b9093fc1528fd81a",
+            "version": "67",
+            "digest": "8XaV7M6u791m4pm9NYYcGPFJ3hBouRxvSr4hYEhMwNuy"
+          }
+        ],
+        "transactions": [
+          {
+            "MoveCall": {
+              "package": "0x9f14ef68cd51365a0bdb88e9c4b2fa60e2b5cdd2204af41aaec96fce116345fb",
+              "module": "house_renting",
+              "function": "transfer_house_to_tenant",
+              "arguments": [
+                {
+                  "Input": 0
+                },
+                {
+                  "Input": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sender": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba",
+      "gasData": {
+        "payment": [
+          {
+            "objectId": "0x44d9b7969ef80339a90eab91eb5a9a4abfa6536dc0f53adec8803e4ead34151c",
+            "version": 66,
+            "digest": "4SCH53qNQ1KKY9UuCuGNopDdmZMbzsNds9bTkoFD7F8o"
+          }
+        ],
+        "owner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba",
+        "price": "1000",
+        "budget": "100000000"
+      }
+    },
+    "txSignatures": [
+      "AMMlhgIQ2gerHt6NVY2yav8MUvh9E+CwHFBRXisN/YsLteH6HzAjaL8t9MYFoxhIaIWt8wRvB0E8bLPsxVc0aAILOhf0ko6FUJbd2CzdzJwJJjAKoANIpywZJWFbPiE5lw=="
+    ]
+  },
+  "effects": {
+    "messageVersion": "v1",
+    "status": {
+      "status": "success"
+    },
+    "executedEpoch": "882",
+    "gasUsed": {
+      "computationCost": "1000000",
+      "storageCost": "4438400",
+      "storageRebate": "4394016",
+      "nonRefundableStorageFee": "44384"
+    },
+    "modifiedAtVersions": [
+      {
+        "objectId": "0x44d9b7969ef80339a90eab91eb5a9a4abfa6536dc0f53adec8803e4ead34151c",
+        "sequenceNumber": "66"
+      },
+      {
+        "objectId": "0xa6900388e0234dc38f3e6ed8eaecfe146b88c0f47abac825b9093fc1528fd81a",
+        "sequenceNumber": "67"
+      }
+    ],
+    "transactionDigest": "6fYyNH9fToajkvvuoJx2PCNGoNfsR9TnS7ho19Apmjnm",
+    "mutated": [
+      {
+        "owner": {
+          "AddressOwner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+        },
+        "reference": {
+          "objectId": "0x44d9b7969ef80339a90eab91eb5a9a4abfa6536dc0f53adec8803e4ead34151c",
+          "version": 68,
+          "digest": "FtbPy68NnqYNZPFvzwTBLzzJ97G1YJ14NTyFWj3RNxJk"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+        },
+        "reference": {
+          "objectId": "0xa6900388e0234dc38f3e6ed8eaecfe146b88c0f47abac825b9093fc1528fd81a",
+          "version": 68,
+          "digest": "DQDibizJL6vtW2XnPSYUMKphBtMSpEnMCt4B9DBvy6KL"
+        }
+      }
+    ],
+    "gasObject": {
+      "owner": {
+        "AddressOwner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+      },
+      "reference": {
+        "objectId": "0x44d9b7969ef80339a90eab91eb5a9a4abfa6536dc0f53adec8803e4ead34151c",
+        "version": 68,
+        "digest": "FtbPy68NnqYNZPFvzwTBLzzJ97G1YJ14NTyFWj3RNxJk"
+      }
+    },
+    "dependencies": [
+      "4mX2Yfr7hKQCbD7pZdkKxLhnrpcbBGYPk7LARshunZMg",
+      "ACxrHqcvebMSTGiGTEwfG8ZkbPDeWctVboogJ65Rwzep",
+      "Hsut71Jw8YqrssnXSgKEcYJfPaiDcjHVg2Hkh8xeVKEo"
+    ]
+  },
+  "events": [],
+  "objectChanges": [
+    {
+      "type": "mutated",
+      "sender": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba",
+      "owner": {
+        "AddressOwner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+      },
+      "objectType": "0x2::coin::Coin<0x2::sui::SUI>",
+      "objectId": "0x44d9b7969ef80339a90eab91eb5a9a4abfa6536dc0f53adec8803e4ead34151c",
+      "version": "68",
+      "previousVersion": "66",
+      "digest": "FtbPy68NnqYNZPFvzwTBLzzJ97G1YJ14NTyFWj3RNxJk"
+    },
+    {
+      "type": "mutated",
+      "sender": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba",
+      "owner": {
+        "AddressOwner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+      },
+      "objectType": "0x9f14ef68cd51365a0bdb88e9c4b2fa60e2b5cdd2204af41aaec96fce116345fb::house_renting::House",
+      "objectId": "0xa6900388e0234dc38f3e6ed8eaecfe146b88c0f47abac825b9093fc1528fd81a",
+      "version": "68",
+      "previousVersion": "67",
+      "digest": "DQDibizJL6vtW2XnPSYUMKphBtMSpEnMCt4B9DBvy6KL"
+    }
+  ],
+  "balanceChanges": [
+    {
+      "owner": {
+        "AddressOwner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+      },
+      "coinType": "0x2::sui::SUI",
+      "amount": "-1044384"
+    }
+  ],
+  "confirmedLocalExecution": true
+}
