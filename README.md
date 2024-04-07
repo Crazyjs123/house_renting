@@ -168,7 +168,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function pay_rent_
 
   ![](imgs/payed_paltform.png)
 
-### 5.5 transfer_house_to_tenant
+### 4.5 transfer_house_to_tenant
 
 > After the tenant pays the rent, the landlord transfers the house to the tenant
 
@@ -187,7 +187,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function transfer_
 
 ![](imgs/transfer_house.png)
 
-### 5.6 landlord_inspect
+### 4.6 landlord_inspect
 
 > After the rent expires, the landlord will come to inspect the house and submit an inspection report.In the report, the landlord mentioned slight damage to the house
 
@@ -208,7 +208,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function landlord_
   export INSPECTION_ID=0x41bb0ee9b929df9a88e0aede978f47eb0cbded8294dcf159c4911e81ba910c0e
   ```
 
-### 5.7 review_inspection_report
+### 4.7 review_inspection_report
 
 > switch to admin account, The paltform administrator agrees with the landlord's assessment of slightly damages and compensate the landlord with 10% of the deposit(100 GAS)
 
@@ -237,7 +237,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_in
 
   ![](imgs/landlord_recive.png)
 
-### 5.8 tenant_return_house_and_transfer
+### 4.8 tenant_return_house_and_transfer
 
 >The tenant returns the room to the landlord , receives the deposit
 
