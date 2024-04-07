@@ -24,18 +24,18 @@
 ## 3 API Definition
 
 - **new_platform_and_transfer**: create a new rental platform object, become a platform administrator
-- **post_rental_notice_and_transfer**:  The landlord releases a rental message, creates a house object  which belong to himself
-- **pay_rent_and_transfer**: Tenants pay rent and sign rental contracts
+- **post_rental_notice_and_transfer**:  The landlord post a rental notice, creates a house object  which belong to landlord
+- **pay_rent_and_transfer**: The tenant pays rent and signs rental contracts
 - **transfer_house_to_tenant**: After the tenant pays the rent, the landlord transfers the house to the tenant
 - **landlord_inspect**:Rent expires, landlord inspects house and submits inspection report
 - **review_inspection_report**: The platform administrator reviews the inspection report and determines the level of damage to the house.
-- **tenant_return_house_and_transfer**: Tenant collect the remaining deposit and return the property to the landlord
+- **tenant_return_house_and_transfer**: Tenant collects the remaining deposit and transfer the house object to the landlord
 
 ## 4 Testing
 
 ### 4.1 publish contract
 
-> switch to Admin account
+> switch to admin account
 
 - **run command**
 
@@ -77,7 +77,7 @@ export ADMIN_ID=0xec560bcaf2cf1f8edc9b0b56df8cfb6050523dd6d0e3a55d09faf3d11d9e03
 
 #### （1）Landlord post a rental notice
 
-> The landlord posted a rental information for 2000 GAS
+> The landlord posts a rental notice,with a monthly rent of 2000 GAS
 
 - **run command**
 
@@ -90,7 +90,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function post_rent
 
 - **important outputs**
 
-![image-20240303001441058](assets/post_notice.png)
+![image-20240303001441058](imgs/post_notice.png)
 
 - **record rental notice and house objecID**
   
@@ -98,11 +98,10 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function post_rent
   export HOUSE_ID=0x160a75a46fdde7274f6e19c3a604bb00fe2f2fbd0382cb1654d2a2d9aa79291d
   export NOTICE_ID=0x18ac421969fddeaf1ffff1040a972500ce9640184f2e476e77e77524b0367e65
 #### （2）display rental platform object detail
-
+> The Rental notice has been added to the rental platform
 ```bash
 $ sui client object $PLATFORM_ID --json
 ```
-
 - notices
 
   ```json
@@ -123,7 +122,7 @@ $ sui client object $PLATFORM_ID --json
 
 ### 4.4 pay_rent_and_transfer
 
-> The tenant applies to rent a house for one month and pays 3000 yuan, of which 2000 yuan is the rent and 1000 yuan is the deposit.
+> The tenant applies to rent a house for one month and pays 3000 GAS, of which 2000 GAS is the rent and 1000 GAS is the deposit.
 
 - **run command**
 
@@ -150,14 +149,14 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function pay_rent_
 
 - **display landlord's GAS**
 
-  >The landlord's account received two thousand GAS
+  >The landlord's account received 2000 GAS
 
   ```bash
   sui client switch --address landlord
   sui client gas
   ```
 
-  ![](imgs/landlord_rent.png)
+  ![](imgs/landlord_rent2.png)
 
 - **display rental platform object**
 
@@ -201,7 +200,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function landlord_
 
 - **important outputs**
 
-  ![](imges/inspection.png)
+  ![](imgs/inspection.png)
 
 - **record respection object id**
 
@@ -255,7 +254,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_in
 
   >After calling the transfer_house_to-tenant method, the house object belongs to the landlord and the tenant collects a deposit of 900 GAS
 
-![](return_house.png)
+![](imgs/return_house.png)
 
 - **display tenant's GAS**
 
