@@ -90,7 +90,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function post_rent
 
 - **important outputs**
 
-![image-20240303001441058](imgs/post_notice.png)
+![](imgs/post_notice.png)
 
 - **record rental notice and house objecID**
   
@@ -252,21 +252,9 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_in
 
 - **important outputs**
 
-  >After calling the transfer_house_to-tenant method, the house object belongs to the landlord and the tenant collects a deposit of 900 GAS
+  >After calling the transfer_house_to-tenant method, the house object belongs to the landlord and the tenant collects a deposit of 900 GAS.
 
 ![](imgs/return_house.png)
-
-- **display tenant's GAS**
-
-  >The tenant's balance has increased by 900 GAS
-
-  ```bash
-  sui client gas
-  ```
-
-  ![](imgs/tenant_gas.png)
-
-  ![](imgs/tenant_gas2.png)
 
 - **display the rental platform**
 
