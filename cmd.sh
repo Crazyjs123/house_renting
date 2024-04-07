@@ -55,7 +55,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_in
 #The tenant returns the room to the landlord , receives the deposit
 echo "=============The tenant returns the room to the landlord , receives the deposit============="
 sui client switch --address tenant
-sui client call --package $PACKAGE_ID --module $MODULE_NAME --function transfer_house_to_tenant --args $LEASE_ID $HOUSE_ID --gas-budget $GAS_BUDGET --json > cmd_output.json
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function tenant_return_house_and_transfer --args $PLATFORM_ID $LEASE_ID $HOUSE_ID --gas-budget $GAS_BUDGET --json > cmd_output.json
 
 
 

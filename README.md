@@ -2,41 +2,40 @@
 
 ## 1 Entity Definition
 
-- Coffee Shop (`Cafe`)
-- Coffee Card (`Card`)
-- Coffee (`Coffee`)
-- Owner (`Owner`, `Admin`)
-- Customer
+- House Renting Platform (`RentalPlatform`)
+- Rental Notice (`RentalNotice`)
+- House (`House`)
+- Lease (`Lease`)
+- Inspection Report(`Inspection`)
+- Platform Administrator(`Admin`)
+- Landlord
+- Tenant
 
 ## 2 Entity Relationship
 
-- Any user can create a coffee shop (`Cafe`) and become the owner (`Owner`, `Admin`)
-- Customers can buy coffee cards (`Card`)
-- Coffee cards (`Card`) can be exchanged for coffee (`Coffee`) on a `1:1` basis
+- Any user can create a rental platform（`RentalPlatform`） and become the platform administrator(`Admin`)
+- Landlord posts a rental notice(`RentalNotice`)
+- Tenant pays rent and deposit, and sign rental contracts(`Lease`).The rent is transferred to the landlord, and the deposit is temporarily managed by the platform 
+- The landlord hands over the house(`House`) to the tenant
+- Rent expires, Landlord inspects house and submits inspection report(`Inspection`)
+- The platform administrator reviews the inspection report and determines the level of damage to the house. If there is any damage, a portion of the deposit will be compensated to the landlord
+- Tenant collect the remaining deposit and return the property to the landlord
 
-## 3 Economic Design
+## 3 API Definition
 
-- Every 5 GAS can buy a coffee card, buy two and get one free, that is, 10 GAS can buy 3 coffee cards, and so on
-- A coffee Card can be exchanged for a cup of coffee, and after the coffee is exchanged, this coffee card becomes invalid
-- Each coffee card has a unique lucky number (`Lucky Number`). Anyone can trigger the contract interface to randomly select a lucky number. If the selected lucky number corresponds to a used coffee card, a new lucky number can be drawn again
-- The holder of the coffee card corresponding to the lucky number can use this lucky number coffee card to get a reward. The reward is to double the number of coffee cards in hand, with a single reward limit of 10 coffee cards. For example: Alice holds 4 coffee cards, one of which has a lucky number of 7. When the randomly selected lucky number is also 7, then good luck happens, `Alice` can destroy this lucky coffee card and double the number of coffee cards she holds.
-- After the lucky number is drawn randomly, it cannot be drawn again until the corresponding coffee card is redeemed. However, the owner has admin rights and can delete the randomly generated lucky number so that a new lucky number can be selected, to avoid customers not claiming their rewards in time.
+- **new_platform_and_transfer**: create a new rental platform object, become a platform administrator
+- **post_rental_notice_and_transfer**:  The landlord releases a rental message, creates a house object  which belong to himself
+- **pay_rent_and_transfer**: Tenants pay rent and sign rental contracts
+- **transfer_house_to_tenant**: After the tenant pays the rent, the landlord transfers the house to the tenant
+- **landlord_inspect**:Rent expires, landlord inspects house and submits inspection report
+- **review_inspection_report**: The platform administrator reviews the inspection report and determines the level of damage to the house.
+- **tenant_return_house_and_transfer**: Tenant collect the remaining deposit and return the property to the landlord
 
-## 4 API Definition
+## 4 Testing
 
-- **create_cafe**: create a new cafe object with the provided base_drand_round and initializes its fields.
-- **buy_cafe_card**: buy a card for the cafe object with the provided sui amount.
-- **buy_coffee**: buy a coffee for the cafe object with the provided card object.
-- **get_lucky_number**: get the lucky number for the cafe object with the provided drand signature.
-- **get_reward_with_lucky_card**: get the reward for the more cafe object with the provided lucky card object.
-- **remove_lucky_number**: remove the winner lucky number of the cafe object.
-- **get_sender_card_count**: get the sender's card count of the cafe object.
+### 4.1 publish contract
 
-## 5 Testing
-
-### 5.1 publish contract
-
-> switch to Jason account
+> switch to Admin account
 
 - **run command**
 
@@ -46,373 +45,236 @@ $ sui client publish --gas-budget 100000000
 
 - **important outputs**
 
-![image-20240302235535001](assets/image-20240302235535001.png)
+![](imgs/package.png)
 
-- **record PackageID**
-
+- **record packageID**
 ```bash
-export PACKAGE_ID=0xc0c00b50dd913b4137bfa078701b04a69f47eb87ac1b6cb6115f4042609657db
-```
-
-### 5.2 create_cafe
-
-- **run command**
-
-```bash
-# Obtain the current round of drand random source
-export BASE_ROUND=`curl -s https://drand.cloudflare.com/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/latest | jq .round`
-echo $BASE_ROUND
-
+export PACKAGE_ID=0xfbee4d57a26894ab4ffc71faf67959483a07dfc55c7e7632e6491d7da3ab1c73
 export GAS_BUDGET=100000000
-sui client call --function create_cafe --package $PACKAGE_ID --module lucky_cafe  --args $BASE_ROUND --gas-budget $GAS_BUDGET
+export MODULE_NAME="house_renting"
 ```
 
-- **important outputs**
-
-![image-20240303000021271](assets/image-20240303000021271.png)
-
-- **record Cafe and Admin objecID**
-
-```bash
-export CAFE=0x8ed617b8bb176011023e63428de3d893e287da85390d8dabeb94d9b5588e5727
-
-export ADMIN=0xc1c6278827259295249bf3d43ce0861c21960693a89b5677b175d9844eafc57c
-```
-
-### 5.3 buy_cafe_card
-
-#### （1）Alice by cafe card
-
-> switch to Alice account
->
-> Alice spent 10 GAS, obtained 2 coffee cards, gave 1 as a reward, totaling 3 coffee cards
+### 4.2 new_platform_and_transfer
 
 - **run command**
 
 ```bash
-# switch to Alice account
-sui client switch --address alice
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function new_platform_and_transfer --gas-budget $GAS_BUDGET
 
-# Find two large GAS objects under Alice, one for paying gas and the other for splitting out the specified number of COIN object for GAS
-sui client gas --json | jq '.[] | select(.gasBalance > 100000) | .gasCoinId' -r > output.txt
-GAS=$(sed -n '1p' output.txt)
-SPLIT_COIN=$(sed -n '2p' output.txt)
-
-# Split out 10 GAS for purchasing coffee card
-export COIN=`sui client split-coin --coin-id $SPLIT_COIN --amounts 10 --gas $GAS --gas-budget $GAS_BUDGET --json | jq -r '.objectChanges[] | select(.objectType=="0x2::coin::Coin<0x2::sui::SUI>" and .type=="created") | .objectId'`
-
-sui client call --function buy_cafe_card --package $PACKAGE_ID --module lucky_cafe --args $CAFE $COIN --gas-budget $GAS_BUDGET 
 ```
-
 - **important outputs**
 
-![image-20240303001441058](assets/image-20240303001441058.png)
+![image-20240303000021271](imgs/new_platform.png)
 
-#### （2）Bob by cafe card
+- **record retal platform and admin objecID**
 
-> switch to Bob account
->
-> Bob spent 5 GAS to obtain 1 coffee card
+```bash
+export PLATFORM_ID=0xb59c401873a2ed5ab234d9e9a5f5e0b70aa9a3ac4726ce4688d11506847534a8
+export ADMIN_ID=0xec560bcaf2cf1f8edc9b0b56df8cfb6050523dd6d0e3a55d09faf3d11d9e0358
+```
+
+### 4.3 post_rental_notice_and_transfer
+
+#### （1）Landlord post a rental notice
+
+> The landlord posted a rental information for 2000 GAS
 
 - **run command**
 
 ```bash
-# switch to Bob account
-sui client switch --address bob
-
-# Find two large GAS objects under Bob, one for paying gas and the other for splitting out the specified number of COIN object for GAS
-sui client gas --json | jq '.[] | select(.gasBalance > 100000) | .gasCoinId' -r > output.txt
-GAS=$(sed -n '1p' output.txt)
-SPLIT_COIN=$(sed -n '2p' output.txt)
-
-# Split out 5 GAS for purchasing coffee card
-export COIN=`sui client split-coin --coin-id $SPLIT_COIN --amounts 5 --gas $GAS --gas-budget $GAS_BUDGET --json | jq -r '.objectChanges[] | select(.objectType=="0x2::coin::Coin<0x2::sui::SUI>" and .type=="created") | .objectId'`
-
-sui client call --function buy_cafe_card --package $PACKAGE_ID --module lucky_cafe --args $CAFE $COIN --gas-budget $GAS_BUDGET 
+# switch to landlord account
+sui client switch --address landlord
+# call post_rental_notice_and_transfer
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function post_rental_notice_and_transfer --args $PLATFORM_ID 2000 70 "his house is very beautiful, facing north and south, with ample sunshine and convenient transportation" "https%3A%2F%2Ftse3-mm.cn.bing.net%2Fth%2Fid%2FOIP-C.NUiYPf7aMFhP-ZCEF0C3IgHaEo%3Fw%3D309%26h%3D193%26c%3D7%26r%3D0%26o%3D5%26pid%3D1.7" --gas-budget $GAS_BUDGET
 ```
 
 - **important outputs**
 
-![image-20240303151613799](assets/image-20240303151613799.png)
+![image-20240303001441058](assets/post_notice.png)
 
-#### （3）display Cafe object detail
+- **record rental notice and house objecID**
+  
+  ```bash
+  export HOUSE_ID=0x160a75a46fdde7274f6e19c3a604bb00fe2f2fbd0382cb1654d2a2d9aa79291d
+  export NOTICE_ID=0x18ac421969fddeaf1ffff1040a972500ce9640184f2e476e77e77524b0367e65
+#### （2）display rental platform object detail
 
 ```bash
-$ sui client object $CAFE
+$ sui client object $PLATFORM_ID --json
 ```
 
-- **owner => card_count**
+- notices
 
-```json
-      "owner_2_card_count": {
-        "type": "0x2::vec_map::VecMap<address, u64>",
-        "fields": {
-          "contents": [
-            {
-              "type": "0x2::vec_map::Entry<address, u64>",
-              "fields": {
-                "key": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19",
-                "value": "3"
-              }
+  ```json
+  "notices": {
+          "type": "0x2::table::Table<0x2::object::ID, 0xfbee4d57a26894ab4ffc71faf67959483a07dfc55c7e7632e6491d7da3ab1c73::house_renting::RentalNotice>",
+          "fields": {
+            "id": {
+              "id": "0xb1c9deb697a18e3a3b31ed43d9e65de179cac4d1b1428b6c211ec12dfb2c8103"
             },
-            {
-              "type": "0x2::vec_map::Entry<address, u64>",
-              "fields": {
-                "key": "0xf2e6ffef7d0543e258d4c47a53d6fa9872de4630cc186950accbd83415b009f0",
-                "value": "1"
-              }
-            }
-          ]
-        }
-      },
-```
+            "size": "1"
+          }
+        },
+        "owner": "0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba"
+      }
+  ```
 
-- **lucky_number => owner**
+  
 
-```json
-      "lucky_number_2_owner": {
-        "type": "0x2::vec_map::VecMap<u64, address>",
-        "fields": {
-          "contents": [
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "0",
-                "value": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "1",
-                "value": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "2",
-                "value": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "3",
-                "value": "0xf2e6ffef7d0543e258d4c47a53d6fa9872de4630cc186950accbd83415b009f0"
-              }
-            }
-          ]
-        }
-```
+### 4.4 pay_rent_and_transfer
 
-- **lucky_number => card_id**
-
-```json
-      "lucky_number_2_card_id": {
-        "type": "0x2::vec_map::VecMap<u64, 0x2::object::ID>",
-        "fields": {
-          "contents": [
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "0",
-                "value": "0x8977e34301e7cca422fd3aa0a1f9a998798949fd325ff1786c7c120810a639e4"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "1",
-                "value": "0xfba606e2c7c66488820823a246eacb3ea0cf0a8dda74e17c5713b9151762468d"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "2",
-                "value": "0xf5c63e851050015040831c11897e7afff74f652c1c653f73abb3d27201b89cb6"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "3",
-                "value": "0x4c5e031144be03246bf38a984981ff74ee9f25e94283d3fc094cdae113a199ff"
-              }
-            }
-          ]
-        }
-      },
-```
-
-### 5.4 buy_coffee
-
-> Switch to the 'Alice' account and use the coffee card with a lucky number of 1 to redeem a cup of coffee
+> The tenant applies to rent a house for one month and pays 3000 yuan, of which 2000 yuan is the rent and 1000 yuan is the deposit.
 
 - **run command**
 
 ```bash
-sui client switch --address alice
-
-export CARD=0xfba606e2c7c66488820823a246eacb3ea0cf0a8dda74e17c5713b9151762468d
-
-sui client call --function buy_coffee --package $PACKAGE_ID --module lucky_cafe --args $CAFE $CARD --gas-budget $GAS_BUDGET 
+#switch ato tenant account
+sui client switch --address tenant
+# split a coin to pay
+sui client split-coin --coin-id 0x44d9b7969ef80339a90eab91eb5a9a4abfa6536dc0f53adec8803e4ead34151c --amounts 3000  --gas-budget 100000000 --gas 0xdbc0212e4aeb1abf9ac75ed326a2fab0083ca853ec0adfa84ae0fbd84f4c96d2
+# set global variables
+export PAY_COIN=0x0e094b5f164f572da2d0d00e1194e4bb351288dde28203de752de449f295720c
+# call pay_rent_and_transfer
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function pay_rent_and_transfer --args $PLATFORM_ID $HOUSE_ID 1 $PAY_COIN --gas-budget $GAS_BUDGET
 ```
 
 - **important outputs**
 
-![image-20240303152244598](assets/image-20240303152244598.png)
+![image-20240303152244598](imgs/lease.png)
 
-- **obtain Coffee object**
+- **record lease objectID**
 
-> This' Coffee 'object can be understood as physical coffee, a credential on the chain, and can be made into NFT form
+  ```bash
+  export LEASE_ID=0xd53c66392451a98d2f3b8535446cd2153138ca440fb287a1f7b7a049bb4ee845
+  ```
 
-![image-20240303152421565](assets/image-20240303152421565.png)
+- **display landlord's GAS**
 
-- **display current Cafe object**
-  - It can be seen that the coffee card with a lucky number of 1 has been destroyed
-  - Alice's number of coffee cards has decreased from 3 to 2
+  >The landlord's account received two thousand GAS
 
-```json
-      "lucky_number_2_card_id": {
-        "type": "0x2::vec_map::VecMap<u64, 0x2::object::ID>",
-        "fields": {
-          "contents": [
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "0",
-                "value": "0x8977e34301e7cca422fd3aa0a1f9a998798949fd325ff1786c7c120810a639e4"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "2",
-                "value": "0xf5c63e851050015040831c11897e7afff74f652c1c653f73abb3d27201b89cb6"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, 0x2::object::ID>",
-              "fields": {
-                "key": "3",
-                "value": "0x4c5e031144be03246bf38a984981ff74ee9f25e94283d3fc094cdae113a199ff"
-              }
-            }
-          ]
-        }
-      },
-      "lucky_number_2_owner": {
-        "type": "0x2::vec_map::VecMap<u64, address>",
-        "fields": {
-          "contents": [
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "0",
-                "value": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "2",
-                "value": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<u64, address>",
-              "fields": {
-                "key": "3",
-                "value": "0xf2e6ffef7d0543e258d4c47a53d6fa9872de4630cc186950accbd83415b009f0"
-              }
-            }
-          ]
-        }
-      },
-      "owner": "0x5c5882d73a6e5b6ea1743fb028eff5e0d7cc8b7ae123d27856c5fe666d91569a",
-      "owner_2_card_count": {
-        "type": "0x2::vec_map::VecMap<address, u64>",
-        "fields": {
-          "contents": [
-            {
-              "type": "0x2::vec_map::Entry<address, u64>",
-              "fields": {
-                "key": "0x2d178b9704706393d2630fe6cf9415c2c50b181e9e3c7a977237bb2929f82d19",
-                "value": "2"
-              }
-            },
-            {
-              "type": "0x2::vec_map::Entry<address, u64>",
-              "fields": {
-                "key": "0xf2e6ffef7d0543e258d4c47a53d6fa9872de4630cc186950accbd83415b009f0",
-                "value": "1"
-              }
-            }
-          ]
-        }
-      },
-```
+  ```bash
+  sui client switch --address landlord
+  sui client gas
+  ```
 
-### 5.5 get_lucky_number
+  ![](imgs/landlord_rent.png)
 
-> If the lucky number has not been drawn yet, or has been drawn and claimed, anyone can draw the lucky number.
+- **display rental platform object**
+
+  >rental notice deleted and platform account received a deposit of 1000 GAS
+
+  ```bash
+  sui client object $PLATFORM_ID
+  ```
+
+  ![](imgs/payed_paltform.png)
+
+### 5.5 transfer_house_to_tenant
+
+> After the tenant pays the rent, the landlord transfers the house to the tenant
 
 - **run command**
 
 ```bash
-# Obtain current round and random number signatures
-curl -s https://drand.cloudflare.com/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/latest > output.txt
-export CURRENT_ROUND=`jq '.round' output.txt`
-export SIGNATURE=0x`jq -r '.signature' output.txt`
-
-# get a lucky number
-sui client call --function get_lucky_number --package $PACKAGE_ID --module lucky_cafe --args $CAFE $CURRENT_ROUND $SIGNATURE --gas-budget $GAS_BUDGET 
+#switch to landlord account
+sui client switch --address landlord
+# call transfer_house_to_tenant
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function transfer_house_to_tenant --args $LEASE_ID $HOUSE_ID  --gas-budget $GAS_BUDGET
 ```
 
 - **important outputs**
 
-If the lucky number is successfully generated, an event will be thrown, and the application can listen to the event and notify the holder of the lucky coffee card to claim the reward.
+  >Now the house object belongs to tenant
 
-![image-20240303153351452](assets/image-20240303153351452.png)
+![](imgs/transfer_house.png)
 
-- **If the lucky number has already been generated, try to get it again will result in an error, indicating that the lucky number has been generated**
+### 5.6 landlord_inspect
 
-```bash
-Error executing transaction: Failure {
-    error: "MoveAbort(MoveLocation { module: ModuleId { address: c0c00b50dd913b4137bfa078701b04a69f47eb87ac1b6cb6115f4042609657db, name: Identifier(\"lucky_cafe\") }, function: 3, instruction: 10, function_name: Some(\"get_lucky_number\") }, 3) in command 0",
-}
-```
-
-### 5.6 get_reward_with_lucky_card
-
-> The holder of the lucky coffee card drawn can claim rewards with the coffee card they hold. The current reward is to double the number of coffee cards held, but the maximum reward limit is 10
+> After the rent expires, the landlord will come to inspect the house and submit an inspection report.In the report, the landlord mentioned slight damage to the house
 
 - **run command**
 
 ```bash
-# Switch to Alice, as the lucky number drawn is 0, which is a coffee card owned by Alice
-sui client switch --address alice
-
-export CARD=0x8977e34301e7cca422fd3aa0a1f9a998798949fd325ff1786c7c120810a639e4
-
-# Use the Lucky Coffee Card you hold to claim rewards
-sui client call --function get_reward_with_lucky_card --package $PACKAGE_ID --module lucky_cafe --args $CAFE $CARD --gas-budget $GAS_BUDGET 
+# call landlord_inspect
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function landlord_inspect --args $LEASE_ID 2 "The house is slightly damaged and requires a 10% deposit compensation" "https%3A%2F%2Ftse1-mm.cn.bing.net%2Fth%2Fid%2FOIP-C.fMDb-yleUONKRzYptYDp-QHaFT%3Fw%3D257%26h%3D184%26c%3D7%26r%3D0%26o%3D5%26pid%3D1.7" --gas-budget $GAS_BUDGET
 ```
 
 - **important outputs**
 
-> Since Alice holds a total of 2 coffee cards, calling this interface will double (2 new cards will be generated) the number of coffee cards and give them to Alice
+  ![](imges/inspection.png)
 
-![image-20240303154423514](assets/image-20240303154423514.png)
+- **record respection object id**
 
-### 5.8 remove_lucky_number
+  ```bash
+  export INSPECTION_ID=0x41bb0ee9b929df9a88e0aede978f47eb0cbded8294dcf159c4911e81ba910c0e
+  ```
 
-> If the holder of the Lucky Coffee Card has not received the reward. The creator of the coffee shop (with `Admin` permission) can delete lucky numbers that have already been generated, so that customers can proceed with the get it again.
+### 5.7 review_inspection_report
+
+> switch to admin account, The paltform administrator agrees with the landlord's assessment of slightly damages and compensate the landlord with 10% of the deposit(100 GAS)
 
 - **run command**
 
 ```bash
-sui client call --function remove_lucky_number --package $PACKAGE_ID --module lucky_cafe --args $ADMIN $CAFE --gas-budget $GAS_BUDGET 
+#switch to admin account
+sui client switch --address admin
+# call review_inspection_report
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_inspection_report --args $PLATFORM_ID $LEASE_ID $INSPECTION_ID 2 $ADMIN_ID --gas-budget $GAS_BUDGET
 ```
+
+- **important outputs**
+
+  ![](imgs/review_inspection.png)
+
+- **dispaly inspection obeject**
+
+  >The status of the house inspection report has changed to reviewed
+
+  ![](imgs/inspection_info.png)
+
+- **balance changes**
+
+  >The landlord received 100 GAS
+
+  ![](imgs/landlord_recive.png)
+
+### 5.8 tenant_return_house_and_transfer
+
+>The tenant returns the room to the landlord , receives the deposit
+
+- **run command**
+
+  ```bash
+  #switch to tenant account
+  sui client switch --address tenant
+  #call transfer_house_to_tenant
+  sui client call --package $PACKAGE_ID --module $MODULE_NAME --function tenant_return_house_and_transfer --args $LEASE_ID $HOUSE_ID --gas-budget $GAS_BUDGET
+  ```
+
+- **important outputs**
+
+  >After calling the transfer_house_to-tenant method, the house object belongs to the landlord and the tenant collects a deposit of 900 GAS
+
+![](return_house.png)
+
+- **display tenant's GAS**
+
+  >The tenant's balance has increased by 900 GAS
+
+  ```bash
+  sui client gas
+  ```
+
+  ![](imgs/tenant_gas.png)
+
+  ![](imgs/tenant_gas2.png)
+
+- **display the rental platform**
+
+  >The deposit_pool field on the rental platform has been cleared
+
+  ```bash
+  sui client object $PLATFORM_ID --json
+  ```
+
+![](imgs/deposit_pool.png)

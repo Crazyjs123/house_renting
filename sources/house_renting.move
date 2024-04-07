@@ -7,7 +7,7 @@ module house_renting::house_renting{
     use sui::tx_context::{Self,TxContext};
     use sui::transfer;
     use sui::table::{Table, Self};
-    use sui::test_utils::assert_eq;
+
 
     // === Constants ===
     //There is no damage to the house
@@ -46,7 +46,7 @@ module house_renting::house_renting{
         // uid of the RentalPlatform object
         id: UID,
         // deposit stored on the rental platform, key is house object id
-        deposit_bool: Table<ID, Coin<SUI>>,
+        deposit_pool: Table<ID, Coin<SUI>>,
         // rental notices on the platform, key is house object id
         notices: Table<ID, RentalNotice>,
         //owner of platform
@@ -187,7 +187,7 @@ module house_renting::house_renting{
 
         if (deduct_deposit > 0) {
             let coin = coin::split(
-                table::borrow_mut<ID, Coin<SUI>>(&mut platform.deposit_bool, lease.house_id),
+                table::borrow_mut<ID, Coin<SUI>>(&mut platform.deposit_pool, lease.house_id),
                 deduct_deposit,
                 ctx,
             );
@@ -209,7 +209,7 @@ module house_renting::house_renting{
     public fun new_platform(ctx: &mut TxContext): Admin {
         let platform = RentalPlatform {
             id: object::new(ctx),
-            deposit_bool: table::new<ID, Coin<SUI>>(ctx),
+            deposit_pool: table::new<ID, Coin<SUI>>(ctx),
             notices: table::new<ID, RentalNotice>(ctx),
             owner: tx_context::sender(ctx),
         };
@@ -258,13 +258,13 @@ module house_renting::house_renting{
         
         //the deposit is stored by rental platform
         let deposit_coin = coin::split<SUI>(&mut paid, notice.deposit, ctx);
-        if (table::contains<ID, Coin<SUI>>(&platform.deposit_bool, notice.house_id)) {
+        if (table::contains<ID, Coin<SUI>>(&platform.deposit_pool, notice.house_id)) {
             coin::join(
-                table::borrow_mut<ID, Coin<SUI>>(&mut platform.deposit_bool, notice.house_id),
+                table::borrow_mut<ID, Coin<SUI>>(&mut platform.deposit_pool, notice.house_id),
                 deposit_coin
             )
         } else {
-            table::add(&mut platform.deposit_bool, notice.house_id, deposit_coin)
+            table::add(&mut platform.deposit_pool, notice.house_id, deposit_coin)
         };
         
         //lease is a Immutable object
@@ -292,7 +292,7 @@ module house_renting::house_renting{
         assert!(lease.house_id == object::uid_to_inner(&house.id), EWrongParams);
         assert!(lease.tenant == tx_context::sender(ctx), ENoPermission);
 
-        let deposit = table::remove<ID, Coin<SUI>>(&mut platform.deposit_bool, lease.house_id);
+        let deposit = table::remove<ID, Coin<SUI>>(&mut platform.deposit_pool, lease.house_id);
        
         (deposit, house)
     }
@@ -302,7 +302,7 @@ module house_renting::house_renting{
     fun caculate_deduct_deposit(paid_deposit: u64, damage: u8): u64 {
         let deduct_deposit:u64 = 0;
         if (DAMAGE_LEVEL_1 == damage) {
-            deduct_deposit = paid_deposit /10 * 9; 
+            deduct_deposit = paid_deposit /10 * 1; 
         };
         if (DAMAGE_LEVEL_2 == damage) {
             deduct_deposit = paid_deposit / 10 * 5; 
@@ -320,6 +320,7 @@ module house_renting::house_renting{
     fun test_rent_house() { 
         use sui::test_scenario;
         use sui::coin::mint_for_testing;
+        use sui::test_utils::assert_eq;
 
         let admin: address = @0x11;
         let landlord: address = @0x22;
