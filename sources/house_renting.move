@@ -74,7 +74,7 @@ module house_renting::house_renting{
     }
 
     // present a house object
-    struct House has key,store {
+    struct House has key {
         // uid of the house object
         id: UID,
         // The square of the house area
@@ -139,7 +139,7 @@ module house_renting::house_renting{
     //The landlord releases a rental message, creates a house object,and transfer.
     public entry fun post_rental_notice_and_transfer(platform: &mut RentalPlatform, monthly_rent: u64, housing_area: u64, description: vector<u8>, photo: vector<u8>, ctx: &mut TxContext){
         let house = post_rental_notice(platform, monthly_rent, housing_area, description, photo, ctx);
-        transfer::public_transfer(house, tx_context::sender(ctx));
+        transfer::transfer(house, tx_context::sender(ctx));
     }
 
     //call pay_rent function,transfer coin object to landlord
@@ -151,7 +151,7 @@ module house_renting::house_renting{
     
     //After the tenant pays the rent, the landlord transfers the house to the tenant
     public entry fun transfer_house_to_tenant(lease: &Lease, house: House) {
-        transfer::public_transfer(house, lease.tenant)
+        transfer::transfer(house, lease.tenant)
     }
     
     //Rent expires, landlord inspects and submits inspection report
@@ -203,7 +203,7 @@ module house_renting::house_renting{
         } else {
             coin::destroy_zero<SUI>(deposit);
         };
-        transfer::public_transfer(house, lease.landlord)
+        transfer::transfer(house, lease.landlord)
     }
     // create a new rentle platform object and initializes its fields.
     public fun new_platform(ctx: &mut TxContext): Admin {
