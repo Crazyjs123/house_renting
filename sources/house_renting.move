@@ -11,7 +11,7 @@ module house_renting::house_renting{
 
     // === Constants ===
     //There is no damage to the house
-    const DAMAGE_LEVEL_UNKOWN: u8 = 0;
+    const DAMAGE_LEVEL_UNKNOWN: u8 = 0;
     const DAMAGE_LEVEL_0: u8 = 1;
     //The house is slightly damaged and requires a 10% deposit compensation
     const DAMAGE_LEVEL_1: u8 = 2;
@@ -165,7 +165,7 @@ module house_renting::house_renting{
             damage: damage,
             damage_description: string::utf8(damage_description),
             damage_photo: string::utf8(damage_photo),
-            damage_assessment_ret: DAMAGE_LEVEL_UNKOWN,
+            damage_assessment_ret: DAMAGE_LEVEL_UNKNOWN,
             deduct_deposit: 0,
             review_status: WAITING_FOR_REVIEW
         };
@@ -179,7 +179,7 @@ module house_renting::house_renting{
         assert!(inspection.review_status == WAITING_FOR_REVIEW, EInspectionReviewed);
         assert!(damage >= DAMAGE_LEVEL_0 && damage <= DAMAGE_LEVEL_3, EDamageIncorrect);
 
-        let deduct_deposit:u64 = caculate_deduct_deposit(lease.paid_deposit, damage);
+        let deduct_deposit:u64 = calculate_deduct_deposit(lease.paid_deposit, damage);
 
         inspection.damage_assessment_ret = damage;
         inspection.review_status = REVIEWED;
@@ -299,14 +299,18 @@ module house_renting::house_renting{
 
 
     // === Private Functions ===
-    fun caculate_deduct_deposit(paid_deposit: u64, damage: u8): u64 {
+    fun calculate_deduct_deposit(paid_deposit: u64, damage: u8): u64 {
+        //Deducting the tenant's deposit as compensation for damaged property
         let deduct_deposit:u64 = 0;
+        //The house is slightly damaged and requires a 10% deposit compensation
         if (DAMAGE_LEVEL_1 == damage) {
             deduct_deposit = paid_deposit /10 * 1; 
         };
+        //The house is moderately damaged and requires a 50% deposit compensation
         if (DAMAGE_LEVEL_2 == damage) {
             deduct_deposit = paid_deposit / 10 * 5; 
         };
+        //The house is severely damaged and requires compensation for all deposits
         if (DAMAGE_LEVEL_3 == damage) {
             deduct_deposit = paid_deposit; 
         };
@@ -429,7 +433,7 @@ module house_renting::house_renting{
             let house = test_scenario::take_from_address_by_id<House>(scenario, tenant, house_id);
             let inspection = test_scenario::take_shared<Inspection>(scenario);
 
-            let expect_deduct_deposit = caculate_deduct_deposit(lease.paid_deposit, inspection.damage); 
+            let expect_deduct_deposit = calculate_deduct_deposit(lease.paid_deposit, inspection.damage); 
             assert_eq(expect_deduct_deposit, inspection.deduct_deposit);
 
 
