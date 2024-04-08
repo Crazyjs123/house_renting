@@ -33,6 +33,14 @@
 
 ## 4 Testing
 
+Before testing, three accounts need to be prepared: admin, landlord, and tenant.In this test, their addresses are:
+
+| account  | address                                                      |
+| -------- | ------------------------------------------------------------ |
+| admin    | 0xc571b07c805118eb0177af2e4e69913af6e9de1bf3fb3fc4df52a8b9d31343cb |
+| landlord | 0xb11b73b6024875e4c2b497e1c571c1932a43d383dbebd6a80bdf058343cb7563 |
+| tenant   | 0x5703b7a4b2bb9a1a38e7baedac5a3530cd8b5e2ae0d0e6171d25f8409dca60ba |
+
 ### 4.1 publish contract
 
 > switch to admin account
