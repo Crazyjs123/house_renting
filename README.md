@@ -166,7 +166,7 @@ sui client call --package $PACKAGE_ID --module $MODULE_NAME --function pay_rent_
   sui client object $PLATFORM_ID
   ```
 
-  ![](imgs/payed_paltform.png)
+  ![](imgs/payed_platform.png)
 
 ### 4.5 transfer_house_to_tenant
 
