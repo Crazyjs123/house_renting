@@ -24,8 +24,8 @@ echo "NOTICE_ID=${NOTICE_ID}"
 # tenant pay rent and deposit
 echo "=============tenant pay rent and pay deposit============="
 sui client switch --address tenant
-SPLIT_COIN=`sui client gas --json | jq '.[] | select(.mistBalance > 10000) | .gasCoinId ' | sed -n '1p' | sed 's/\"//g'`
-GAS=`sui client gas --json | jq '.[] | select(.mistBalance > 10000) | .gasCoinId ' | sed -n '2p' | sed 's/\"//g'`
+SPLIT_COIN=`sui client gas --json | jq '.[] | select(.mistBalance > 3000) | .gasCoinId ' | sed -n '1p' | sed 's/\"//g'`
+GAS=`sui client gas --json | jq '.[] | select(.mistBalance > 3000) | .gasCoinId ' | sed -n '2p' | sed 's/\"//g'`
 echo "SPLIT_COIN=${SPLIT_COIN}"
 echo "GAS=${GAS}"
 sui client split-coin --coin-id $SPLIT_COIN --amounts 3000  --gas-budget $GAS_BUDGET --gas $GAS --json > cmd_output.json
@@ -49,7 +49,7 @@ echo "INSPECTION_ID=${INSPECTION_ID}"
 #The platform administrator reviews the inspection report and return a coin of  deposit
 echo "=============The platform administrator reviews the inspection report and return a coin of  deposit============="
 sui client switch --address admin
-sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_inspection_report --args $PLATFORM_ID $LEASE_ID $INSPECTION_ID 3 $ADMIN_ID --gas-budget $GAS_BUDGET --json > cmd_output.json
+sui client call --package $PACKAGE_ID --module $MODULE_NAME --function review_inspection_report --args $PLATFORM_ID $LEASE_ID $INSPECTION_ID $ADMIN_ID 3 --gas-budget $GAS_BUDGET --json > cmd_output.json
 
 
 #The tenant returns the room to the landlord , receives the deposit

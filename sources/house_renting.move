@@ -6,6 +6,7 @@ module house_renting::house_renting{
     use sui::object::{Self,UID, ID};
     use sui::tx_context::{Self,TxContext};
     use sui::transfer;
+    use sui::balance::{Self,Balance};
     use sui::table::{Table, Self};
 
 
@@ -37,16 +38,22 @@ module house_renting::house_renting{
     const EWrongParams: u64 = 5;
     const EInspectionReviewed: u64 = 6;
     const EInvalidNotice: u64 = 7;
+    const EInvalidDeposit: u64 = 8;
+    const EInvalidHouse: u64 = 9;
+    const EInsufficientBalance: u64 = 10;
+
+
 
 
 
     // === Structs ===
     // This is a platform for landlords to post rentals and tenants to rent apartments.  
-    struct RentalPlatform has key,store {
+    struct RentalPlatform has key {
         // uid of the RentalPlatform object
         id: UID,
-        // deposit stored on the rental platform, key is house object id
-        deposit_pool: Table<ID, Coin<SUI>>,
+        // deposit stored on the rental platform, key is house object id,value is the amount of deposit
+        deposit_pool: Table<ID, u64>,
+        balance: Balance<SUI>,
         // rental notices on the platform, key is house object id
         notices: Table<ID, RentalNotice>,
         //owner of platform
@@ -142,11 +149,12 @@ module house_renting::house_renting{
         transfer::transfer(house, tx_context::sender(ctx));
     }
 
-    //call pay_rent function,transfer coin object to landlord
+    //call pay_rent function,transfer rent coin object  to landlord, deposit will be managed by platform.
     public entry fun pay_rent_and_transfer(platform: &mut RentalPlatform, house_address: address, tenancy: u32,  paid: Coin<SUI>, ctx: &mut TxContext) {
         let house_id: ID = object::id_from_address(house_address);
-        let (paid, landlord) = pay_rent(platform, house_id, tenancy, paid, ctx);
-        transfer::public_transfer(paid, landlord);
+        let (rent_coin, deposit_coin, landlord) = pay_rent(platform, house_id, tenancy, paid, ctx);
+        transfer::public_transfer(rent_coin, landlord);
+        balance::join(&mut platform.balance, coin::into_balance(deposit_coin));
     }
     
     //After the tenant pays the rent, the landlord transfers the house to the tenant
@@ -173,48 +181,46 @@ module house_renting::house_renting{
         transfer::public_share_object(inspection);
     }
 
-    //The platform administrator reviews the inspection report and return a coin of  deposit
-    public entry fun review_inspection_report(platform: &mut RentalPlatform, lease: &Lease, inspection: &mut Inspection, damage: u8, _: &Admin, ctx: &mut TxContext)  {
+    //The platform administrator reviews the inspection report and deducts the deposit as compensation for the landlord
+    public entry fun review_inspection_report(platform: &mut RentalPlatform, lease: &Lease, inspection: &mut Inspection, _: &Admin, damage: u8, ctx: &mut TxContext)  {
         assert!(lease.house_id == inspection.house_id, EWrongParams);
         assert!(inspection.review_status == WAITING_FOR_REVIEW, EInspectionReviewed);
-        assert!(damage >= DAMAGE_LEVEL_0 && damage <= DAMAGE_LEVEL_3, EDamageIncorrect);
-
+        assert!(table::contains<ID, u64>(&platform.deposit_pool, lease.house_id), EInvalidDeposit);
+    
         let deduct_deposit:u64 = calculate_deduct_deposit(lease.paid_deposit, damage);
+        let deposit_amount = table::borrow_mut<ID, u64>(&mut platform.deposit_pool, lease.house_id);
+
+        assert!(deduct_deposit <= balance::value<SUI>(&platform.balance), EInsufficientBalance);
 
         inspection.damage_assessment_ret = damage;
         inspection.review_status = REVIEWED;
         inspection.deduct_deposit = deduct_deposit;
 
         if (deduct_deposit > 0) {
-            let coin = coin::split(
-                table::borrow_mut<ID, Coin<SUI>>(&mut platform.deposit_pool, lease.house_id),
-                deduct_deposit,
-                ctx,
-            );
-            transfer::public_transfer(coin, lease.landlord);
-        }
+            *deposit_amount = *deposit_amount - deduct_deposit; 
+
+            let deduct_coin = coin::take<SUI>(&mut platform.balance, deduct_deposit, ctx);
+            transfer_deposit(deduct_coin, lease.landlord)
+        };
     }
 
-    //The tenant returns the room to the landlord , receives the deposit
+    //The tenant returns the room to the landlord,collects deposit 
     public entry fun tenant_return_house_and_transfer(platform: &mut RentalPlatform, lease: &Lease, house: House, ctx: &mut TxContext) {
-        let (deposit, house) = tenant_return_house(platform, lease, house, ctx);
-         if (coin::value(&deposit) > 0) {
-               transfer::public_transfer(deposit, tx_context::sender(ctx)); 
-        } else {
-            coin::destroy_zero<SUI>(deposit);
-        };
+        let house = tenant_return_house(platform, lease, house, ctx);
+     
         transfer::transfer(house, lease.landlord)
     }
     // create a new rentle platform object and initializes its fields.
     public fun new_platform(ctx: &mut TxContext): Admin {
         let platform = RentalPlatform {
             id: object::new(ctx),
-            deposit_pool: table::new<ID, Coin<SUI>>(ctx),
+            deposit_pool: table::new<ID, u64>(ctx),
+            balance: balance::zero<SUI>(),
             notices: table::new<ID, RentalNotice>(ctx),
             owner: tx_context::sender(ctx),
         };
     
-        transfer::public_share_object(platform);
+        transfer::share_object(platform);
 
         Admin {
             id: object::new(ctx),
@@ -247,26 +253,22 @@ module house_renting::house_renting{
     }
 
     //Tenants pay rent and sign rental contracts
-    public fun pay_rent(platform: &mut RentalPlatform, house_id: ID, tenancy: u32,  paid: Coin<SUI>, ctx: &mut TxContext): (Coin<SUI>, address) {
+    public fun pay_rent(platform: &mut RentalPlatform, house_id: ID, tenancy: u32,  paid: Coin<SUI>, ctx: &mut TxContext): (Coin<SUI>, Coin<SUI>, address) {
         assert!(tenancy > 0, ETenancyIncorrect);
         assert!(table::contains<ID, RentalNotice>(&platform.notices, house_id), EInvalidNotice);
 
         let notice = table::borrow<ID, RentalNotice>(&platform.notices, house_id);
+        assert!(!table::contains<ID, u64>(&platform.deposit_pool, notice.house_id), EInvalidHouse);
+
+
         let rent = notice.monthly_rent * (tenancy as u64);
         let total_fee = rent + notice.deposit;
         assert!(total_fee == coin::value(&paid), EInvalidSuiAmount);
         
         //the deposit is stored by rental platform
         let deposit_coin = coin::split<SUI>(&mut paid, notice.deposit, ctx);
-        if (table::contains<ID, Coin<SUI>>(&platform.deposit_pool, notice.house_id)) {
-            coin::join(
-                table::borrow_mut<ID, Coin<SUI>>(&mut platform.deposit_pool, notice.house_id),
-                deposit_coin
-            )
-        } else {
-            table::add(&mut platform.deposit_pool, notice.house_id, deposit_coin)
-        };
-        
+        table::add<ID, u64>(&mut platform.deposit_pool, notice.house_id, notice.deposit);
+
         //lease is a Immutable object
         let lease = Lease {
             id: object::new(ctx),
@@ -284,19 +286,32 @@ module house_renting::house_renting{
         object::delete(notice_id);
 
 
-        (paid, landlord)
+        (paid, deposit_coin, landlord)
     }
   
     //The tenant returns the room to the landlord and receives the deposit
-    public fun tenant_return_house(platform: &mut RentalPlatform, lease: &Lease, house: House, ctx: &mut TxContext): (Coin<SUI>, House) {
+    public fun tenant_return_house(platform: &mut RentalPlatform, lease: &Lease, house: House, ctx: &mut TxContext): House {
         assert!(lease.house_id == object::uid_to_inner(&house.id), EWrongParams);
         assert!(lease.tenant == tx_context::sender(ctx), ENoPermission);
+        assert!(table::contains<ID, u64>(&platform.deposit_pool, lease.house_id), EInvalidDeposit);
+        
+        let deposit = table::borrow(&platform.deposit_pool, lease.house_id);
+        assert!(*deposit <= balance::value<SUI>(&platform.balance), EInsufficientBalance);
 
-        let deposit = table::remove<ID, Coin<SUI>>(&mut platform.deposit_pool, lease.house_id);
-       
-        (deposit, house)
+        //If there is still any remaining deposit, refund it to the tenant
+        if (*deposit > 0) {
+            let deposit_coin = coin::take<SUI>(&mut platform.balance, *deposit, ctx);
+            transfer_deposit(deposit_coin, tx_context::sender(ctx));
+        };
+
+        let _ = table::remove<ID, u64>(&mut platform.deposit_pool, lease.house_id);
+
+        house
     }
 
+    fun transfer_deposit(coin: Coin<SUI>, reciver: address) {
+            transfer::public_transfer(coin, reciver);
+    }
 
     // === Private Functions ===
     fun calculate_deduct_deposit(paid_deposit: u64, damage: u8): u64 {
@@ -417,7 +432,7 @@ module house_renting::house_renting{
             let admin_object = test_scenario::take_from_address_by_id<Admin>(scenario, admin, admin_id);
             let lease = test_scenario::take_immutable<Lease>(scenario);
 
-            review_inspection_report(platform_ref, &lease, &mut inspection, damage, &admin_object, test_scenario::ctx(scenario));
+            review_inspection_report(platform_ref, &lease, &mut inspection, &admin_object, damage, test_scenario::ctx(scenario));
 
             test_scenario::return_immutable<Lease>(lease);
             test_scenario::return_to_address<Admin>(admin, admin_object);
